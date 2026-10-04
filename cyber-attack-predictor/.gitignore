@@ -1,0 +1,37 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+venv/
+.env
+.venv/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Large data files — store in data/ but do NOT commit to git
+data/raw/*.csv
+data/raw/*.parquet
+data/raw/*.pcap
+data/processed/*.csv
+data/processed/*.parquet
+
+# Serialised models — can be large; use DVC or cloud storage instead
+models/*.pkl
+models/*.joblib
+models/*.json
+models/*.bin
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# IDE configs
+.vscode/
+.idea/
+
+# Secrets / credentials
+*.env
+secrets.toml
