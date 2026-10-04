@@ -51,3 +51,5 @@ watchdog==6.0.0
 websockets==17.2
 xgboost==3.4.1
 shap==0.52.0
+streamlit==1.65.0
+pytest==9.1.1

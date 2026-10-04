@@ -97,16 +97,101 @@ python src/train.py           # train model     → models/
 ### 4. Launch the dashboard
 
 ```bash
+### 4. Launch the dashboard locally
+
+```bash
+# Seed initial administrator user (if not already seeded)
+python scripts/seed_admin.py --username admin --password "AdminSecure2026!" --role admin
+
+# Run Streamlit
 streamlit run app/Home.py
 ```
 
-### 5. Run with Docker
+---
 
-```bash
-docker build -t cyber-predictor .
-docker run -p 8501:8501 cyber-predictor
-# Open http://localhost:8501
-```
+## 🐳 Docker Deployment Instructions
+
+The application is fully containerised with Docker and Docker Compose for portable, reproducible deployments.
+
+### Prerequisites
+- [Docker Engine](https://docs.docker.com/engine/install/) or [Docker Desktop](https://www.docker.com/products/docker-desktop/) (v20.10+)
+- [Docker Compose](https://docs.docker.com/compose/) (v2.0+)
+
+### Option A: Using Docker Compose (Recommended)
+
+Docker Compose automatically handles container builds, port mappings (`8501:8501`), and mounts persistent volumes for SQLite databases and trained models.
+
+1. **Build and start the container in detached mode**:
+   ```bash
+   docker compose up --build -d
+   ```
+
+2. **Verify container status and logs**:
+   ```bash
+   docker compose ps
+   docker compose logs -f
+   ```
+
+3. **Access the dashboard**:
+   Navigate to **`http://localhost:8501`** in your browser.
+
+4. **Seed or manage administrative users inside the container**:
+   ```bash
+   # Seed admin with custom password
+   docker compose exec cyber-attack-predictor python scripts/seed_admin.py --username admin --password "YourCustomPassword!" --role admin
+   ```
+
+5. **Stop the container**:
+   ```bash
+   docker compose down
+   ```
+
+### Option B: Using the Docker CLI Directly
+
+1. **Build the Docker image**:
+   ```bash
+   docker build -t cyber-attack-predictor .
+   ```
+
+2. **Run the container with volume persistence**:
+   ```bash
+   # On Windows (PowerShell):
+   docker run -d -p 8501:8501 `
+     -v ${PWD}/data:/app/data `
+     -v ${PWD}/models:/app/models `
+     --name cyber_predictor_app `
+     cyber-attack-predictor
+
+   # On Linux / macOS:
+   docker run -d -p 8501:8501 \
+     -v $(pwd)/data:/app/data \
+     -v $(pwd)/models:/app/models \
+     --name cyber_predictor_app \
+     cyber-attack-predictor
+   ```
+
+3. **Check container logs**:
+   ```bash
+   docker logs -f cyber_predictor_app
+   ```
+
+4. **Stop and remove container**:
+   ```bash
+   docker stop cyber_predictor_app && docker rm cyber_predictor_app
+   ```
+
+---
+
+## 🔐 Default Access Credentials
+
+The application enforces role-based access control (RBAC):
+
+| Role | Default Username | Default Password | Permissions |
+|---|---|---|---|
+| **Admin** | `admin` | `AdminSecure2026!` | Full Dashboard, SOC Control & Audit Panel, User Registry |
+| **Analyst** | `analyst` | `AnalystPass2026!` | Real-time Telemetry, Incident Triage, Trend Visualizations |
+
+*(Credentials are stored as salted bcrypt hashes in `data/cyber_threat.db`. Never commit raw passwords to version control.)*
 
 ---
 
@@ -114,52 +199,44 @@ docker run -p 8501:8501 cyber-predictor
 
 | Library | Purpose |
 |---|---|
-| `pandas` / `numpy` | Data manipulation |
-| `scikit-learn` | Preprocessing, metrics, baseline models |
-| `xgboost` | Primary gradient-boosted classifier |
-| `imbalanced-learn` | SMOTE oversampling for class imbalance |
-| `shap` | Model explainability (feature attributions) |
-| `matplotlib` / `seaborn` / `plotly` | Visualisation |
-| `streamlit` | Interactive web dashboard |
-| `sqlalchemy` | Database ORM (prediction log, users) |
-| `bcrypt` | Secure password hashing for auth |
-| `joblib` | Model serialisation / deserialisation |
-| `pyarrow` | Fast Parquet I/O for large datasets |
+| `pandas` / `numpy` | High-performance numerical and telemetry manipulation |
+| `scikit-learn` | Stratified splitting, metrics evaluation, Isolation Forest |
+| `xgboost` | Multi-class gradient-boosted attack classifier |
+| `shap` | Model explainability and plain-English feature attribution |
+| `matplotlib` / `seaborn` / `plotly` | Plotting, confusion matrices, and interactive gauges |
+| `streamlit` | Multi-page real-time security operations center web UI |
+| `sqlalchemy` | Database ORM (users, prediction logs, alerts) |
+| `bcrypt` | Salted password hashing for authentication |
+| `joblib` | Model artifact serialization and deserialization |
+| `pyarrow` | High-throughput Parquet I/O |
+| `pytest` | Automated unit and integration test suite |
 
 ---
 
 ## 🧪 Running Tests
 
 ```bash
+# Run complete test suite with verbose output
 pytest tests/ -v
 ```
 
 ---
 
-## 📐 Coding Conventions
+## 🗺️ Project Milestones & Status
 
-- **No hardcoded absolute paths** — use `pathlib.Path(__file__).parent` or env variables.
-- **Clear docstrings** on every public function and class.
-- **Beginner-readable** — prefer explicit variable names over clever one-liners.
-- **Type hints** on all function signatures.
-- All data artefacts (large CSVs, model files) are excluded from git via `.gitignore`.
-
----
-
-## 🗺️ Roadmap
-
-- [ ] `preprocessing.py` — load + clean CICIDS dataset  
-- [ ] `features.py` — engineer packet-rate, entropy, protocol-flag features  
-- [ ] `train.py` — XGBoost + SMOTE with 5-fold CV  
-- [ ] `risk_engine.py` — threshold-based risk scoring  
-- [ ] `explain.py` — SHAP TreeExplainer integration  
-- [ ] `predict.py` — single-sample inference wrapper  
-- [ ] `app/Home.py` — live threat dashboard  
-- [ ] `app/auth.py` — login / logout flow  
-- [ ] `app/db.py` — SQLite prediction log  
-- [ ] `app/pages/` — Predict, History, Explain, Admin pages  
-- [ ] `tests/` — full pytest coverage  
-- [ ] Docker Compose with persistent volume  
+- [x] `preprocessing.py` — load, clean, and encode CIC-IDS2017 dataset  
+- [x] `features.py` — behavioral rates, directional ratios, flag distributions, packet sizes  
+- [x] `train.py` — Stratified split, XGBoost with class weights, Isolation Forest baseline  
+- [x] `risk_engine.py` — Composite dynamic risk formula, threat tiers, early warning alerts  
+- [x] `explain.py` — SHAP TreeExplainer with natural-language driving indicators  
+- [x] `predict.py` — Unified inference API returning risk, threat level, indicators, priority  
+- [x] `app/Home.py` — Real-time telemetry dashboard with Plotly gauge and CSV uploader  
+- [x] `app/auth.py` — bcrypt authentication and role-based page protection  
+- [x] `app/db.py` — SQLite database with users, predictions, and alerts tables  
+- [x] `app/pages/1_Alerts.py` — Priority queue sorted by `Risk × Probability` and incident triage  
+- [x] `app/pages/2_Trends.py` — Interactive Plotly risk timelines and attack distributions  
+- [x] `app/pages/3_History.py` — Persistent prediction audit log with CSV export  
+- [x] `Dockerfile` & `docker-compose.yml` — Containerized deployment with volume mounts  
 
 ---
 
