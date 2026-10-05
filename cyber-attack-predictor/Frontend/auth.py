@@ -23,7 +23,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 import bcrypt
 import streamlit as st
-from app.db import get_user_by_username, init_db, create_user
+from Backend.db import get_user_by_username, init_db, create_user
 
 
 # ---------------------------------------------------------------------------

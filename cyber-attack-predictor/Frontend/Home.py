@@ -24,11 +24,11 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from app.auth import require_auth
-from app.db import list_users, get_recent_alerts, log_alert, log_prediction
+from Frontend.auth import require_auth
+from Backend.db import list_users, get_recent_alerts, log_alert, log_prediction
 
-from src.preprocessing import clean_column_names, replace_infinities
-from src.features import (
+from Backend.src.preprocessing import clean_column_names, replace_infinities
+from Backend.src.features import (
     compute_rate_features,
     compute_directional_features,
     compute_tcp_flag_features,
@@ -36,7 +36,7 @@ from src.features import (
     compute_duration_bucket_features,
     compute_cic_advanced_features,
 )
-from src.predict import predict
+from Backend.src.predict import predict
 
 # ---------------------------------------------------------------------------
 # Streamlit Page Configuration
