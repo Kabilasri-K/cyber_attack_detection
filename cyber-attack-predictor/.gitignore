@@ -35,3 +35,5 @@ Thumbs.db
 # Secrets / credentials
 *.env
 secrets.toml
+
+data/cyber_threat.db
