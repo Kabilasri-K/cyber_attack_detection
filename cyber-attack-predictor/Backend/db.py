@@ -1,7 +1,10 @@
 """
 db.py
 =====
-SQLAlchemy database setup and schema definitions using SQLite.
+SQLAlchemy database setup and schema definitions supporting:
+- PostgreSQL (via psycopg2)
+- MySQL (via pymysql)
+- SQLite (local development / fallback)
 
 Tables:
 - users: id, username, password_hash, role
@@ -12,6 +15,8 @@ Tables:
 from __future__ import annotations
 
 import datetime
+import logging
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -28,19 +33,80 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 
+logger = logging.getLogger("cyber_db")
+
 # ---------------------------------------------------------------------------
-# Database File Location (SQLite)
+# Database Configuration (PostgreSQL / MySQL / SQLite)
 # ---------------------------------------------------------------------------
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DB_DIR = PROJECT_ROOT / "data"
 DB_DIR.mkdir(parents=True, exist_ok=True)
-DB_PATH = DB_DIR / "cyber_threat.db"
-DB_URL = f"sqlite:///{DB_PATH.as_posix()}"
+SQLITE_PATH = DB_DIR / "cyber_threat.db"
+SQLITE_DEFAULT_URL = f"sqlite:///{SQLITE_PATH.as_posix()}"
 
-# Create SQLite Engine
-engine = create_engine(DB_URL, connect_args={"check_same_thread": False}, echo=False)
+
+def build_database_url() -> str:
+    """
+    Build database URL supporting:
+    1. DATABASE_URL environment variable (PostgreSQL, MySQL, or SQLite)
+    2. Explicit DB_TYPE (postgresql, mysql) with DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME
+    3. Safe local fallback to SQLite
+    """
+    raw_url = os.getenv("DATABASE_URL")
+    if raw_url:
+        if raw_url.startswith("postgres://"):
+            return raw_url.replace("postgres://", "postgresql+psycopg2://", 1)
+        if raw_url.startswith("postgresql://") and "+psycopg2" not in raw_url:
+            return raw_url.replace("postgresql://", "postgresql+psycopg2://", 1)
+        if raw_url.startswith("mysql://") and "+pymysql" not in raw_url:
+            return raw_url.replace("mysql://", "mysql+pymysql://", 1)
+        return raw_url
+
+    db_type = os.getenv("DB_TYPE", "").strip().lower()
+    if db_type in ("postgresql", "postgres"):
+        user = os.getenv("DB_USER", "postgres")
+        password = os.getenv("DB_PASSWORD", "postgres")
+        host = os.getenv("DB_HOST", "localhost")
+        port = os.getenv("DB_PORT", "5432")
+        name = os.getenv("DB_NAME", "cyber_threat")
+        return f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{name}"
+
+    if db_type == "mysql":
+        user = os.getenv("DB_USER", "root")
+        password = os.getenv("DB_PASSWORD", "")
+        host = os.getenv("DB_HOST", "localhost")
+        port = os.getenv("DB_PORT", "3306")
+        name = os.getenv("DB_NAME", "cyber_threat")
+        return f"mysql+pymysql://{user}:{password}@{host}:{port}/{name}"
+
+    return SQLITE_DEFAULT_URL
+
+
+def init_engine():
+    target_url = build_database_url()
+    is_sqlite = target_url.startswith("sqlite")
+
+    if not is_sqlite:
+        try:
+            eng = create_engine(target_url, pool_pre_ping=True, echo=False)
+            with eng.connect():
+                logger.info("Successfully connected to primary database: %s", target_url.split("@")[-1])
+            return eng, target_url
+        except Exception as err:
+            logger.warning(
+                "Primary database (%s) unavailable: %s. Falling back to local SQLite.",
+                target_url.split("@")[-1],
+                err,
+            )
+
+    eng = create_engine(SQLITE_DEFAULT_URL, connect_args={"check_same_thread": False}, echo=False)
+    return eng, SQLITE_DEFAULT_URL
+
+
+engine, DB_URL = init_engine()
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
 
 
 # ---------------------------------------------------------------------------

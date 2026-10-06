@@ -195,21 +195,22 @@ The application enforces role-based access control (RBAC):
 
 ---
 
-## 📦 Key Dependencies
+## 📦 Key Dependencies (PDF Section 8 Aligned)
 
-| Library | Purpose |
-|---|---|
-| `pandas` / `numpy` | High-performance numerical and telemetry manipulation |
-| `scikit-learn` | Stratified splitting, metrics evaluation, Isolation Forest |
-| `xgboost` | Multi-class gradient-boosted attack classifier |
-| `shap` | Model explainability and plain-English feature attribution |
-| `matplotlib` / `seaborn` / `plotly` | Plotting, confusion matrices, and interactive gauges |
-| `streamlit` | Multi-page real-time security operations center web UI |
-| `sqlalchemy` | Database ORM (users, prediction logs, alerts) |
-| `bcrypt` | Salted password hashing for authentication |
-| `joblib` | Model artifact serialization and deserialization |
-| `pyarrow` | High-throughput Parquet I/O |
-| `pytest` | Automated unit and integration test suite |
+| Library | Category | Purpose |
+|---|---|---|
+| `fastapi` / `uvicorn` | **Backend / REST API** | High-throughput asynchronous REST API with OpenAPI Swagger UI |
+| `psycopg2` / `pymysql` | **Database Drivers** | Native drivers for PostgreSQL & MySQL integration |
+| `sqlalchemy` | **Database ORM** | Multi-database ORM abstraction (PostgreSQL, MySQL, SQLite) |
+| `pandas` / `numpy` | **Data Processing** | Numerical array manipulation and network telemetry processing |
+| `scikit-learn` | **Machine Learning** | Model evaluation metrics and Isolation Forest anomaly detector |
+| `xgboost` | **Attack Classifier** | Multi-class gradient-boosted cyber attack classification |
+| `shap` | **Explainable AI (XAI)** | Natural-language top feature drivers & TreeExplainer attributions |
+| `streamlit` / `plotly` | **Dashboard** | Security operations center monitoring and interactive gauges |
+| `bcrypt` | **Authentication** | Salted password hashing for role-based access control |
+| `joblib` | **Serialization** | High-speed serialized model loading and artifact caching |
+| `pyarrow` | **Data Storage** | High-throughput Apache Parquet columnar storage |
+| `pytest` | **Testing** | Automated unit and integration test suite (14 / 14 passing) |
 
 ---
 

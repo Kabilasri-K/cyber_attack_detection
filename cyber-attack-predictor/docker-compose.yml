@@ -1,11 +1,65 @@
 version: "3.8"
 
 services:
-  cyber-attack-predictor:
+  # ============================================================================
+  # 1. Database Service: PostgreSQL (PDF Tech Stack: PostgreSQL / MySQL)
+  # ============================================================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: cyber_threat_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: CyberSecure2026!
+      POSTGRES_DB: cyber_threat
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================================
+  # 2. Backend REST API Service: FastAPI (PDF Tech Stack: FastAPI / Flask)
+  # ============================================================================
+  api:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: cyber_attack_predictor_app
+    container_name: cyber_attack_predictor_api
+    restart: unless-stopped
+    entrypoint: ["uvicorn", "Backend.api:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql+psycopg2://postgres:CyberSecure2026!@postgres:5432/cyber_threat
+      - API_PORT=8000
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ============================================================================
+  # 3. Security Dashboard Service: Streamlit (PDF Tech Stack: Streamlit / Plotly)
+  # ============================================================================
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cyber_attack_predictor_dashboard
+    restart: unless-stopped
     ports:
       - "8501:8501"
     environment:
@@ -13,18 +67,22 @@ services:
       - STREAMLIT_SERVER_PORT=8501
       - STREAMLIT_SERVER_ADDRESS=0.0.0.0
       - STREAMLIT_SERVER_HEADLESS=true
+      - DATABASE_URL=postgresql+psycopg2://postgres:CyberSecure2026!@postgres:5432/cyber_threat
       - ADMIN_PASSWORD=AdminSecure2026!
     volumes:
-      # Mount persistent SQLite database and datasets
       - ./data:/app/data
-      # Mount trained model artifacts
       - ./models:/app/models
-      # Mount generated evaluation results and plots
       - ./results:/app/results
-    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8501/_stcore/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 15s
+
+volumes:
+  postgres_data:
+    driver: local

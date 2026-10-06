@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cyber Shield SOC | Early Warning & Attack Prediction</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- Top Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="logo">
+        <span class="shield-icon">🛡️</span>
+        <div>
+          <span class="logo-title">CYBER SHIELD SOC</span>
+          <span class="logo-sub">Early Warning & Prediction System</span>
+        </div>
+      </div>
+      <div class="nav-links">
+        <span class="badge backend-badge" id="db-badge">DB: Connecting...</span>
+        <a href="/docs" target="_blank" class="nav-btn api-btn">⚡ OpenAPI Docs</a>
+        <a href="http://localhost:8501" target="_blank" class="nav-btn streamlit-btn">📊 Streamlit Dashboard</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="dashboard-container">
+    <!-- Top KPI Bar -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-title">TOTAL FLOWS ANALYZED</div>
+        <div class="kpi-value" id="kpi-flows">--</div>
+        <div class="kpi-sub">Continuous Telemetry</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">AVERAGE RISK SCORE</div>
+        <div class="kpi-value" id="kpi-risk">--</div>
+        <div class="kpi-sub">Scale: 0 - 100</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">ACTIVE OPEN ALERTS</div>
+        <div class="kpi-value highlight-red" id="kpi-alerts">--</div>
+        <div class="kpi-sub">Requires Analyst Triage</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">DATABASE ENGINE</div>
+        <div class="kpi-value highlight-blue" id="kpi-engine">SQLAlchemy</div>
+        <div class="kpi-sub">PostgreSQL / MySQL / SQLite</div>
+      </div>
+    </section>
+
+    <!-- Main Workspace: Prediction Form + Result Panel -->
+    <div class="workspace-grid">
+      <!-- Left Panel: Flow Telemetry Input Form -->
+      <section class="card form-panel">
+        <div class="card-header">
+          <h2>🎯 Real-time Flow Inference</h2>
+          <span class="card-tag">FastAPI Endpoint: /api/v1/predict</span>
+        </div>
+
+        <p class="section-desc">Submit network flow statistics or load an attack scenario preset:</p>
+
+        <!-- Presets -->
+        <div class="preset-buttons">
+          <button type="button" class="preset-btn" onclick="loadPreset('benign')">🟢 Normal Browsing</button>
+          <button type="button" class="preset-btn" onclick="loadPreset('dos')">🔴 DoS Hulk Flood</button>
+          <button type="button" class="preset-btn" onclick="loadPreset('portscan')">🟡 PortScan Sweep</button>
+        </div>
+
+        <form id="prediction-form">
+          <div class="form-row">
+            <div class="input-group">
+              <label for="pkt_rate">Packet Rate (pkts/sec)</label>
+              <input type="number" step="any" id="pkt_rate" name="pkt_rate" required value="45.2">
+            </div>
+            <div class="input-group">
+              <label for="byte_rate">Byte Rate (bytes/sec)</label>
+              <input type="number" step="any" id="byte_rate" name="byte_rate" required value="12500.0">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="input-group">
+              <label for="fwd_pkt_rate">Forward Packet Rate</label>
+              <input type="number" step="any" id="fwd_pkt_rate" name="fwd_pkt_rate" required value="22.5">
+            </div>
+            <div class="input-group">
+              <label for="bwd_pkt_rate">Backward Packet Rate</label>
+              <input type="number" step="any" id="bwd_pkt_rate" name="bwd_pkt_rate" required value="22.7">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="input-group">
+              <label for="fwd_bwd_pkt_ratio">Fwd / Bwd Ratio</label>
+              <input type="number" step="any" id="fwd_bwd_pkt_ratio" name="fwd_bwd_pkt_ratio" required value="1.0">
+            </div>
+            <div class="input-group">
+              <label for="syn_flag_ratio">SYN Flag Ratio (0 - 1)</label>
+              <input type="number" step="any" id="syn_flag_ratio" name="syn_flag_ratio" min="0" max="1" required value="0.05">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="input-group">
+              <label for="ack_flag_ratio">ACK Flag Ratio (0 - 1)</label>
+              <input type="number" step="any" id="ack_flag_ratio" name="ack_flag_ratio" min="0" max="1" required value="0.85">
+            </div>
+            <div class="input-group">
+              <label for="rst_flag_ratio">RST Flag Ratio (0 - 1)</label>
+              <input type="number" step="any" id="rst_flag_ratio" name="rst_flag_ratio" min="0" max="1" required value="0.0">
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="submit-btn" id="btn-predict">
+              <span id="btn-text">⚡ Run Attack & Risk Assessment</span>
+              <span class="spinner" id="btn-spinner" style="display: none;"></span>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Right Panel: Threat Score & SHAP Explainability -->
+      <section class="card results-panel" id="results-card">
+        <div class="card-header">
+          <h2>📊 Threat Assessment Output</h2>
+          <span class="badge" id="alert-status-badge">Standby</span>
+        </div>
+
+        <div id="results-placeholder" class="placeholder-box">
+          <div class="radar-ping"></div>
+          <p>Ready to analyze network telemetry.</p>
+          <p class="sub">Click <strong>Run Attack & Risk Assessment</strong> or pick a preset.</p>
+        </div>
+
+        <div id="results-content" style="display: none;">
+          <!-- Gauge & Summary -->
+          <div class="score-summary-grid">
+            <div class="score-circle-container">
+              <div class="score-circle" id="score-circle">
+                <span class="score-number" id="res-score">0</span>
+                <span class="score-unit">/ 100</span>
+              </div>
+              <div class="tier-label" id="res-threat-tier">LOW THREAT</div>
+            </div>
+
+            <div class="metrics-list">
+              <div class="metric-row">
+                <span class="metric-label">Predicted Classification:</span>
+                <span class="metric-val highlight-cyan" id="res-attack-type">BENIGN</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">Attack Probability:</span>
+                <span class="metric-val" id="res-prob">0%</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">Zero-Day Anomaly Score:</span>
+                <span class="metric-val" id="res-anomaly">0%</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">Investigation Priority:</span>
+                <span class="metric-val" id="res-priority">Low</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- SHAP Risk Indicators -->
+          <div class="indicators-section">
+            <h3>🔍 Explainable AI (SHAP Drivers):</h3>
+            <ul class="indicators-list" id="res-indicators">
+              <!-- Populated by JS -->
+            </ul>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Bottom Section: Live Security Alerts Priority Queue -->
+    <section class="card alerts-panel">
+      <div class="card-header">
+        <h2>🚨 Early Warning Alerts Queue</h2>
+        <div class="alerts-actions">
+          <button class="filter-btn active" onclick="loadAlerts('All')">All</button>
+          <button class="filter-btn" onclick="loadAlerts('Critical')">Critical</button>
+          <button class="filter-btn" onclick="loadAlerts('High')">High</button>
+          <button class="filter-btn" onclick="loadAlerts('Open')">Open Only</button>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="alerts-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>TIMESTAMP (UTC)</th>
+              <th>SOURCE</th>
+              <th>RISK SCORE</th>
+              <th>THREAT LEVEL</th>
+              <th>STATUS</th>
+              <th>ACTION</th>
+            </tr>
+          </thead>
+          <tbody id="alerts-tbody">
+            <tr>
+              <td colspan="7" class="loading-td">Loading security alerts...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Cyber Attack Prediction & Early Warning System | Internship Project 2026</p>
+    <p class="tech-stack-tag">Tech Stack: Python • FastAPI • PostgreSQL / MySQL • Scikit-learn • XGBoost • SHAP • HTML/CSS/JS • Streamlit</p>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

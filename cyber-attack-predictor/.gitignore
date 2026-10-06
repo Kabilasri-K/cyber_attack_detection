@@ -18,11 +18,11 @@ data/raw/*.pcap
 data/processed/*.csv
 data/processed/*.parquet
 
-# Serialised models — can be large; use DVC or cloud storage instead
+# Serialised models
 models/*.pkl
-models/*.joblib
 models/*.json
 models/*.bin
+!models/*.joblib
 
 # OS noise
 .DS_Store
