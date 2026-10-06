@@ -1,0 +1,30 @@
+# Core data science
+numpy>=1.26
+pandas>=2.0
+scikit-learn>=1.3
+scipy>=1.11
+joblib>=1.3
+pyarrow>=14.0
+
+# ML models
+xgboost>=2.0
+shap>=0.44
+
+# Visualization
+plotly>=5.18
+
+# Streamlit dashboard
+streamlit>=1.35
+SQLAlchemy>=2.0
+bcrypt>=4.0
+python-dateutil>=2.8
+requests>=2.31
+
+# REST API Backend (PDF Tech Stack: FastAPI)
+fastapi>=0.110
+uvicorn>=0.28
+pydantic>=2.6
+
+# Database Drivers (PDF Tech Stack: PostgreSQL & MySQL)
+psycopg2-binary>=2.9
+pymysql>=1.1
